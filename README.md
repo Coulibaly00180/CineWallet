@@ -270,7 +270,7 @@ export const db = drizzle(sqlite);
 
 ---
 
-## 🆕 Récentes améliorations (v1.2)
+## 🆕 Récentes améliorations (v1.3)
 
 ### ✅ Problèmes résolus
 * **Assets/Icônes** : Résolution des problèmes d'affichage d'icônes sur smartphone
@@ -280,10 +280,13 @@ export const db = drizzle(sqlite);
 * **Système de fichiers** : Migration vers `expo-file-system/legacy` pour éviter les warnings
 
 ### 🎯 Nouvelles fonctionnalités
+* **🔍 Filtres de billets** : Système de filtrage avec SegmentedButtons (Tous, Valides, Utilisés, Expirés)
+* **📊 Compteurs dynamiques** : Affichage en temps réel du nombre de billets par catégorie
+* **⚠️ Détection d'expiration** : Identification automatique des billets expirés avec highlighting
+* **📱 Interface intuitive** : Filtres visuels avec icônes Material Design et état vide personnalisé
 * **Date picker natif** : Interface système native Android/iOS pour sélection de date
 * **Gestion d'assets optimisée** : Regeneration automatique des ressources avec `npx expo prebuild --clean`
 * **Documentation complète** : Guide détaillé pour la gestion des assets et ressources natives
-* **Validation améliorée** : Meilleure gestion des erreurs de formulaire
 
 ---
 
@@ -385,7 +388,7 @@ export default {
 
 ## 🗺️ Roadmap
 
-* Filtres : Non utilisés / Utilisés / Expirés
+* ✅ **Filtres : Non utilisés / Utilisés / Expirés** - Implémenté avec SegmentedButtons
 * Sélecteur de cinéma (logo, couleurs)
 * Notifications locales avant expiration
 * Import/Export JSON (sauvegarde/restauration)

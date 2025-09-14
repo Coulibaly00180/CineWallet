@@ -1,19 +1,44 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet } from 'react-native';
-import { FAB, Button, Text, Card, IconButton } from 'react-native-paper';
+import { FAB, Button, Text, Card, IconButton, SegmentedButtons } from 'react-native-paper';
 import { useTickets } from '@/state/useTickets';
 import TicketCard from '@/components/TicketCard';
 import { HomeScreenProps } from '@/types/navigation';
 
+type FilterType = 'all' | 'pending' | 'used' | 'expired';
+
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { items, refresh, loading } = useTickets();
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
   useEffect(() => {
     refresh();
   }, []);
 
-  const pendingTickets = items.filter(ticket => ticket.status === 'PENDING');
+  // Helper function to check if ticket is expired
+  const isExpired = (expiresAt: Date) => {
+    return new Date() > new Date(expiresAt);
+  };
+
+  // Filter tickets based on active filter
+  const getFilteredTickets = () => {
+    const now = new Date();
+    switch (activeFilter) {
+      case 'pending':
+        return items.filter(ticket => ticket.status === 'PENDING' && !isExpired(ticket.expiresAt));
+      case 'used':
+        return items.filter(ticket => ticket.status === 'USED');
+      case 'expired':
+        return items.filter(ticket => ticket.status === 'PENDING' && isExpired(ticket.expiresAt));
+      default: // 'all'
+        return items;
+    }
+  };
+
+  const filteredTickets = getFilteredTickets();
+  const pendingTickets = items.filter(ticket => ticket.status === 'PENDING' && !isExpired(ticket.expiresAt));
   const usedTickets = items.filter(ticket => ticket.status === 'USED');
+  const expiredTickets = items.filter(ticket => ticket.status === 'PENDING' && isExpired(ticket.expiresAt));
 
   return (
     <View style={styles.container}>
@@ -44,6 +69,38 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         >
           Cinémas
         </Button>
+      </View>
+
+      {/* Filtres */}
+      <View style={styles.filtersContainer}>
+        <SegmentedButtons
+          value={activeFilter}
+          onValueChange={(value) => setActiveFilter(value as FilterType)}
+          buttons={[
+            {
+              value: 'all',
+              label: `Tous (${items.length})`,
+              icon: 'ticket-outline',
+            },
+            {
+              value: 'pending',
+              label: `Valides (${pendingTickets.length})`,
+              icon: 'clock-outline',
+            },
+            {
+              value: 'used',
+              label: `Utilisés (${usedTickets.length})`,
+              icon: 'check-circle-outline',
+            },
+            {
+              value: 'expired',
+              label: `Expirés (${expiredTickets.length})`,
+              icon: 'alert-circle-outline',
+              style: expiredTickets.length > 0 ? { backgroundColor: '#ffebee' } : undefined,
+            },
+          ]}
+          style={styles.segmentedButtons}
+        />
       </View>
 
       {/* Statistiques */}
@@ -91,7 +148,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         </View>
       ) : (
         <FlatList
-          data={items}
+          data={filteredTickets}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
@@ -100,6 +157,32 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               ticket={item}
               onPress={() => navigation.navigate('TicketDetail', { id: item.id })}
             />
+          )}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyState}>
+              <IconButton
+                icon={
+                  activeFilter === 'pending' ? 'clock-outline' :
+                  activeFilter === 'used' ? 'check-circle-outline' :
+                  activeFilter === 'expired' ? 'alert-circle-outline' :
+                  'ticket-outline'
+                }
+                size={48}
+                iconColor="#999"
+              />
+              <Text variant="titleMedium" style={styles.emptyTitle}>
+                {activeFilter === 'pending' && 'Aucun billet valide'}
+                {activeFilter === 'used' && 'Aucun billet utilisé'}
+                {activeFilter === 'expired' && 'Aucun billet expiré'}
+                {activeFilter === 'all' && 'Aucun billet'}
+              </Text>
+              <Text variant="bodyMedium" style={styles.emptySubtitle}>
+                {activeFilter === 'pending' && 'Tous vos billets sont soit utilisés, soit expirés'}
+                {activeFilter === 'used' && 'Aucun billet n\'a encore été marqué comme utilisé'}
+                {activeFilter === 'expired' && 'Aucun de vos billets n\'est expiré'}
+                {activeFilter === 'all' && 'Commencez par ajouter votre premier billet'}
+              </Text>
+            </View>
           )}
         />
       )}
@@ -177,5 +260,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
+  },
+  filtersContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  segmentedButtons: {
+    elevation: 0,
   },
 });
