@@ -5,9 +5,13 @@ export type RootStackParamList = {
   AddTicket: { qrPayload?: string } | undefined;
   Scan: undefined;
   TicketDetail: { id: string };
+  Cinemas: undefined;
+  AddCinema: undefined;
 };
 
 export type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
 export type AddTicketScreenProps = NativeStackScreenProps<RootStackParamList, 'AddTicket'>;
 export type ScanScreenProps = NativeStackScreenProps<RootStackParamList, 'Scan'>;
 export type TicketDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'TicketDetail'>;
+export type CinemasScreenProps = NativeStackScreenProps<RootStackParamList, 'Cinemas'>;
+export type AddCinemaScreenProps = NativeStackScreenProps<RootStackParamList, 'AddCinema'>;
