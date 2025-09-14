@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1757856323867,
+      "tag": "0000_pink_betty_ross",
+      "breakpoints": true
+    }
+  ]
+}
