@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { View, Alert, ScrollView, StyleSheet } from 'react-native';
+import { View, Alert, ScrollView, StyleSheet, Platform } from 'react-native';
 import { TextInput, Button, HelperText, Menu, Divider, Text, Card, IconButton } from 'react-native-paper';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTickets } from '@/state/useTickets';
 import { useCinemas } from '@/state/useCinemas';
 import { pickAndStoreFile, getFileType } from '@/utils/file';
@@ -12,6 +13,10 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
   const [qrPayload, setQrPayload] = useState(route.params?.qrPayload ?? '');
   const [expiresAt, setExpiresAt] = useState<string>('');
   const [sourceFileUri, setSourceFileUri] = useState('');
+
+  // États pour le date picker
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [cinemaId, setCinemaId] = useState('');
   const [cinemaName, setCinemaName] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
@@ -20,9 +25,49 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
   const { add } = useTickets();
   const { items: cinemas, refresh: refreshCinemas } = useCinemas();
 
+  // Fonction pour formater la date en français
+  const formatDateFrench = (date: Date): string => {
+    return date.toLocaleDateString('fr-FR');
+  };
+
+  // Fonction pour convertir une date française en format ISO
+  const parseFrenchDate = (dateStr: string): Date => {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Handler pour le changement de date
+  const handleDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (date && event.type !== 'dismissed') {
+      setSelectedDate(date);
+      const formattedDate = formatDateFrench(date);
+      setExpiresAt(formattedDate);
+      if (errors.expiresAt) setErrors(prev => ({ ...prev, expiresAt: '' }));
+
+      if (Platform.OS === 'ios') {
+        setShowDatePicker(false);
+      }
+    } else if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+  };
+
   useEffect(() => {
-    refreshCinemas();
-  }, []);
+    if (cinemas.length === 0) {
+      refreshCinemas();
+    }
+  }, [cinemas.length]);
+
+  // Persist QR payload from navigation params
+  useEffect(() => {
+    if (route.params?.qrPayload) {
+      setQrPayload(route.params.qrPayload);
+    }
+  }, [route.params?.qrPayload]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -32,10 +77,19 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
     if (!qrPayload.trim()) newErrors.qrPayload = 'Payload QR requis';
     if (!cinemaId.trim()) newErrors.cinemaId = 'Cinéma requis';
     if (!expiresAt) newErrors.expiresAt = 'Date d\'expiration requise';
-    else {
-      const date = new Date(expiresAt);
-      if (isNaN(date.getTime())) newErrors.expiresAt = 'Date invalide';
-      if (date < new Date()) newErrors.expiresAt = 'Date d\'expiration passée';
+    else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(expiresAt)) {
+      newErrors.expiresAt = 'Format de date invalide (JJ/MM/AAAA)';
+    } else {
+      try {
+        const date = parseFrenchDate(expiresAt);
+        if (isNaN(date.getTime())) {
+          newErrors.expiresAt = 'Date invalide';
+        } else if (date < new Date()) {
+          newErrors.expiresAt = 'Date d\'expiration passée';
+        }
+      } catch {
+        newErrors.expiresAt = 'Date invalide';
+      }
     }
     if (!sourceFileUri) newErrors.sourceFileUri = 'Fichier PDF requis';
 
@@ -53,7 +107,7 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
         qrPayload: qrPayload.trim(),
         cinemaId: cinemaId.trim(),
         sourceFileUri,
-        expiresAt: new Date(expiresAt),
+        expiresAt: parseFrenchDate(expiresAt),
         notes: null
       });
       navigation.goBack();
@@ -132,17 +186,16 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
               visible={menuVisible}
               onDismiss={() => setMenuVisible(false)}
               anchor={
-                <TextInput
-                  label="Cinéma"
-                  value={cinemaName}
-                  onTouchStart={() => setMenuVisible(true)}
-                  editable={false}
-                  error={!!errors.cinemaId}
-                  placeholder="Sélectionnez un cinéma"
-                  left={<TextInput.Icon icon="movie" />}
-                  right={<TextInput.Icon icon="chevron-down" onPress={() => setMenuVisible(true)} />}
-                  style={styles.textInput}
-                />
+                <Button
+                  mode="outlined"
+                  onPress={() => setMenuVisible(!menuVisible)}
+                  icon="movie"
+                  contentStyle={[styles.cinemaButtonContent, { justifyContent: 'flex-start' }]}
+                  style={[styles.cinemaButton, errors.cinemaId && styles.cinemaButtonError]}
+                  labelStyle={[styles.cinemaButtonLabel, !cinemaName && styles.placeholderText]}
+                >
+                  {cinemaName || "Sélectionnez un cinéma"}
+                </Button>
               }
             >
               {cinemas.length === 0 ? (
@@ -184,18 +237,16 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
 
           {/* Expiration Date Input */}
           <View style={styles.inputSection}>
-            <TextInput
-              label="Date d'expiration"
-              value={expiresAt}
-              onChangeText={(text) => {
-                setExpiresAt(text);
-                if (errors.expiresAt) setErrors(prev => ({ ...prev, expiresAt: '' }));
-              }}
-              error={!!errors.expiresAt}
-              placeholder="YYYY-MM-DD"
-              left={<TextInput.Icon icon="calendar" />}
-              style={styles.textInput}
-            />
+            <Button
+              mode="outlined"
+              onPress={() => setShowDatePicker(true)}
+              icon="calendar"
+              contentStyle={[styles.dateButtonContent, { justifyContent: 'flex-start' }]}
+              style={[styles.dateButton, errors.expiresAt && styles.dateButtonError]}
+              labelStyle={[styles.dateButtonLabel, !expiresAt && styles.placeholderText]}
+            >
+              {expiresAt || "Sélectionnez une date"}
+            </Button>
             <HelperText type="error" visible={!!errors.expiresAt}>{errors.expiresAt}</HelperText>
           </View>
 
@@ -243,6 +294,17 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
           Scanner un QR code
         </Button>
       </View>
+
+      {/* Native Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+          minimumDate={new Date()}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -318,5 +380,40 @@ const styles = StyleSheet.create({
   },
   scanButton: {
     paddingVertical: 4,
+  },
+  cinemaButton: {
+    backgroundColor: '#fafafa',
+    paddingVertical: 12,
+    justifyContent: 'flex-start',
+  },
+  cinemaButtonError: {
+    borderColor: '#f44336',
+  },
+  cinemaButtonContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  cinemaButtonLabel: {
+    fontSize: 16,
+    textAlign: 'left',
+  },
+  placeholderText: {
+    color: '#666',
+  },
+  dateButton: {
+    backgroundColor: '#fafafa',
+    paddingVertical: 12,
+    justifyContent: 'flex-start',
+  },
+  dateButtonError: {
+    borderColor: '#f44336',
+  },
+  dateButtonContent: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  dateButtonLabel: {
+    fontSize: 16,
+    textAlign: 'left',
   },
 });

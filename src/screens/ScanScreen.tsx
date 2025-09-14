@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, Linking } from 'react-native';
 import { Button, TextInput, Divider, ActivityIndicator, Card, IconButton, Text } from 'react-native-paper';
 import { ScanScreenProps } from '@/types/navigation';
-import { initBarCodeScanner, getBarCodeScanner, getLoadError } from '@/utils/barcode';
+import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 
 export default function ScanScreen({ navigation }: ScanScreenProps) {
-  const [hasPerm, setHasPerm] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [manualQR, setManualQR] = useState('');
   const [showManual, setShowManual] = useState(false);
@@ -13,32 +13,49 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
   const [scannerError, setScannerError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadScanner = async () => {
-      setScannerLoading(true);
-      const scanner = await initBarCodeScanner();
+    const checkPermissions = async () => {
+      // Attendre que permission soit chargé
+      if (permission === null) {
+        return;
+      }
 
-      if (scanner) {
-        try {
-          const result = await scanner.requestPermissionsAsync();
-          setHasPerm(result.status === 'granted');
-        } catch (error) {
-          console.warn('Permission request failed:', error);
-          setHasPerm(false);
+      setScannerLoading(true);
+      setScannerError(null);
+
+      try {
+        if (permission.granted) {
+          // Permission déjà accordée
+          setScannerLoading(false);
+          return;
         }
-      } else {
-        setScannerError(getLoadError());
-        setHasPerm(false);
+
+        if (!permission.canAskAgain) {
+          setScannerError('Permission caméra définitivement refusée. Allez dans les paramètres pour l\'activer.');
+          setScannerLoading(false);
+          return;
+        }
+
+        // Demander la permission
+        const result = await requestPermission();
+        if (!result.granted) {
+          setScannerError('Permission caméra refusée');
+        }
+      } catch (error) {
+        console.warn('Permission request failed:', error);
+        setScannerError('Erreur lors de la demande de permission');
       }
 
       setScannerLoading(false);
     };
 
-    loadScanner();
-  }, []);
+    checkPermissions();
+  }, [permission, requestPermission]);
 
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
-    setScanned(true);
-    navigation.navigate('AddTicket', { qrPayload: data });
+  const handleBarcodeScanned = ({ data }: { data: string }) => {
+    if (!scanned) {
+      setScanned(true);
+      navigation.navigate('AddTicket', { qrPayload: data });
+    }
   };
 
   const handleManualInput = () => {
@@ -47,7 +64,11 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
     }
   };
 
-  if (scannerLoading || hasPerm === null) {
+  const openSettings = () => {
+    Linking.openSettings();
+  };
+
+  if (scannerLoading) {
     return (
       <View style={styles.loadingContainer}>
         <Card style={styles.loadingCard}>
@@ -55,7 +76,7 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
             <IconButton icon="camera" size={48} iconColor="#1976d2" />
             <ActivityIndicator size="large" style={styles.loadingIndicator} />
             <Text variant="headlineSmall" style={styles.loadingTitle}>
-              {scannerLoading ? 'Chargement du scanner...' : 'Demande d\'autorisation caméra...'}
+              Chargement du scanner...
             </Text>
           </Card.Content>
         </Card>
@@ -63,19 +84,41 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
     );
   }
 
-  if (!hasPerm || scannerError) {
+  if (!permission?.granted || scannerError) {
     return (
       <View style={styles.errorContainer}>
         <View style={styles.errorHeader}>
           <IconButton icon="camera-off" size={48} iconColor="#f44336" />
           <Text variant="headlineSmall" style={styles.errorTitle}>Scanner QR Code</Text>
           <Text variant="bodyMedium" style={styles.errorText}>
-            {scannerError ? `Scanner non disponible: ${scannerError}` : 'Accès caméra refusé'}
+            {scannerError || 'Accès caméra refusé'}
           </Text>
           <Text variant="bodySmall" style={styles.errorSubtitle}>
             Utilisez la saisie manuelle ci-dessous
           </Text>
         </View>
+
+        {!permission?.granted && permission?.canAskAgain && (
+          <Button
+            mode="outlined"
+            onPress={() => requestPermission()}
+            icon="camera"
+            style={styles.settingsButton}
+          >
+            Autoriser la caméra
+          </Button>
+        )}
+
+        {!permission?.canAskAgain && (
+          <Button
+            mode="outlined"
+            onPress={openSettings}
+            icon="cog"
+            style={styles.settingsButton}
+          >
+            Ouvrir les paramètres
+          </Button>
+        )}
 
         <Card style={styles.manualCard}>
           <Card.Content>
@@ -174,66 +217,15 @@ export default function ScanScreen({ navigation }: ScanScreenProps) {
     );
   }
 
-  const BarCodeScanner = getBarCodeScanner();
-
-  if (!BarCodeScanner) {
-    return (
-      <View style={styles.errorContainer}>
-        <View style={styles.errorHeader}>
-          <IconButton icon="alert-circle" size={48} iconColor="#ff9800" />
-          <Text variant="headlineSmall" style={styles.errorTitle}>Scanner QR Code</Text>
-          <Text variant="bodyMedium" style={styles.errorText}>Module scanner non chargé</Text>
-          <Text variant="bodySmall" style={styles.errorSubtitle}>
-            Utilisez la saisie manuelle ci-dessous
-          </Text>
-        </View>
-
-        <Card style={styles.manualCard}>
-          <Card.Content>
-            <View style={styles.manualHeader}>
-              <IconButton icon="pencil" size={24} iconColor="#1976d2" />
-              <Text variant="titleMedium" style={styles.manualTitle}>Saisie manuelle</Text>
-            </View>
-
-            <TextInput
-              label="Contenu du QR code"
-              value={manualQR}
-              onChangeText={setManualQR}
-              multiline
-              numberOfLines={4}
-              style={styles.manualInput}
-              left={<TextInput.Icon icon="qrcode" />}
-            />
-
-            <Button
-              mode="contained"
-              onPress={handleManualInput}
-              disabled={!manualQR.trim()}
-              icon="check"
-              style={styles.confirmButton}
-            >
-              Utiliser ce QR code
-            </Button>
-          </Card.Content>
-        </Card>
-
-        <Button
-          mode="outlined"
-          onPress={() => navigation.goBack()}
-          icon="arrow-left"
-          style={styles.backButton}
-        >
-          Retour
-        </Button>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.scannerContainer}>
-      <BarCodeScanner
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      <CameraView
         style={StyleSheet.absoluteFillObject}
+        facing="back"
+        onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: ["qr", "pdf417"],
+        }}
       />
 
       <View style={styles.scannerOverlay}>
@@ -348,6 +340,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
     color: '#666',
+  },
+  settingsButton: {
+    marginBottom: 20,
+    alignSelf: 'center',
   },
   manualCard: {
     elevation: 2,

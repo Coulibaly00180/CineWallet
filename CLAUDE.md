@@ -21,6 +21,11 @@ Generate database migrations:
 npm run drizzle:generate
 ```
 
+Regenerate native resources (after asset changes):
+```bash
+npx expo prebuild --clean
+```
+
 ## Architecture Overview
 
 **CineWallet** is a React Native Expo app for managing cinema tickets with QR code scanning capabilities.
@@ -75,6 +80,21 @@ The app uses SQLite with Drizzle ORM and automatic migrations:
 - `src/state/` - Zustand stores
 - `src/utils/` - Utilities (ID generation, validation, file operations)
 - `src/theme/` - React Native Paper theming
+
+### Assets Management
+The app uses optimized assets for better performance and proper display:
+
+**Asset Requirements:**
+- `icon.png`: 512x512px, <100KB (main app icon)
+- `adaptive-icon.png`: 432x432px, <50KB (Android adaptive icon)
+- `splash-icon.png`: 1024x1024px, <200KB (splash screen)
+- `favicon.png`: 64x64px, <10KB (web favicon)
+
+**Important Notes:**
+- After modifying assets in `/assets` directory, **always run** `npx expo prebuild --clean`
+- This regenerates native Android/iOS resources with new assets
+- Without this step, old cached assets will be used
+- Large unoptimized assets (>1MB) can prevent proper loading
 
 ### Development Notes
 - App uses French UI text and comments

@@ -1,5 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export async function pickAndStoreFile(): Promise<string | null> {
   try {
@@ -26,12 +26,13 @@ export async function pickAndStoreFile(): Promise<string | null> {
     // Utiliser le répertoire de documents avec un nom unique
     const fileExtension = asset.name.split('.').pop() || 'file';
     const filename = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExtension}`;
-    const docDir = (FileSystem as any).documentDirectory;
-    const dest = `${docDir}${filename}`;
+    const dest = `${FileSystem.documentDirectory}${filename}`;
 
-    // Copier le fichier avec l'API legacy pour éviter les warnings
-    const { copyAsync } = await import('expo-file-system/legacy');
-    await copyAsync({ from: asset.uri, to: dest });
+    // Copier le fichier avec l'API standard
+    await FileSystem.copyAsync({
+      from: asset.uri,
+      to: dest
+    });
 
     console.log(`📁 Fichier sauvegardé: ${asset.name} (${asset.size} bytes)`);
     return dest;
