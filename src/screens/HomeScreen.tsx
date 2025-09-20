@@ -74,6 +74,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         >
           Cinémas
         </Button>
+        <Button
+          mode="text"
+          onPress={() => navigation.navigate('Backup')}
+          icon="cloud-sync"
+          style={styles.headerButton}
+        >
+          Sauvegarde
+        </Button>
       </View>
 
       {/* Filtres */}

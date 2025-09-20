@@ -7,6 +7,7 @@ export type RootStackParamList = {
   TicketDetail: { id: string };
   Cinemas: undefined;
   AddCinema: undefined;
+  Backup: undefined;
 };
 
 export type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
@@ -15,3 +16,4 @@ export type ScanScreenProps = NativeStackScreenProps<RootStackParamList, 'Scan'>
 export type TicketDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'TicketDetail'>;
 export type CinemasScreenProps = NativeStackScreenProps<RootStackParamList, 'Cinemas'>;
 export type AddCinemaScreenProps = NativeStackScreenProps<RootStackParamList, 'AddCinema'>;
+export type BackupScreenProps = NativeStackScreenProps<RootStackParamList, 'Backup'>;
