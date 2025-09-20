@@ -4,12 +4,17 @@ import { FAB, Button, Text, Card, IconButton, SegmentedButtons } from 'react-nat
 import { useTickets } from '@/state/useTickets';
 import TicketCard from '@/components/TicketCard';
 import { HomeScreenProps } from '@/types/navigation';
+import { useNotificationScheduler, useNotificationCleanup } from '@/hooks/useNotificationScheduler';
 
 type FilterType = 'all' | 'pending' | 'used' | 'expired';
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { items, refresh, loading } = useTickets();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+
+  // Initialiser les hooks de notification
+  useNotificationScheduler();
+  useNotificationCleanup();
 
   useEffect(() => {
     refresh();

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { View, Alert, ScrollView, StyleSheet, Platform } from 'react-native';
-import { TextInput, Button, HelperText, Menu, Divider, Text, Card, IconButton } from 'react-native-paper';
+import { TextInput, Button, HelperText, Text, Card, IconButton } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTickets } from '@/state/useTickets';
-import { useCinemas } from '@/state/useCinemas';
 import { pickAndStoreFile, getFileType } from '@/utils/file';
 import { TicketInput } from '@/utils/validators';
 import { AddTicketScreenProps } from '@/types/navigation';
+import CinemaSelector from '@/components/CinemaSelector';
+import TicketAnalyzerModal from '@/components/TicketAnalyzerModal';
+import { ExtractedTicketData } from '@/utils/ticketAnalyzer';
 
 export default function AddTicketScreen({ navigation, route }: AddTicketScreenProps) {
   const [code, setCode] = useState('');
@@ -19,11 +21,10 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [cinemaId, setCinemaId] = useState('');
   const [cinemaName, setCinemaName] = useState('');
-  const [menuVisible, setMenuVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showAnalyzerModal, setShowAnalyzerModal] = useState(false);
   const { add } = useTickets();
-  const { items: cinemas, refresh: refreshCinemas } = useCinemas();
 
   // Fonction pour formater la date en français
   const formatDateFrench = (date: Date): string => {
@@ -56,11 +57,6 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
     }
   };
 
-  useEffect(() => {
-    if (cinemas.length === 0) {
-      refreshCinemas();
-    }
-  }, [cinemas.length]);
 
   // Persist QR payload from navigation params
   useEffect(() => {
@@ -116,6 +112,50 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
     } finally {
       setLoading(false);
     }
+  };
+
+  /**
+   * Gestionnaire pour les données extraites par l'IA
+   */
+  const handleExtractedData = (data: ExtractedTicketData) => {
+    // Remplir automatiquement les champs avec les données extraites
+    if (data.code) {
+      setCode(data.code);
+      setErrors(prev => ({ ...prev, code: '' }));
+    }
+
+    if (data.qrPayload) {
+      setQrPayload(data.qrPayload);
+      setErrors(prev => ({ ...prev, qrPayload: '' }));
+    }
+
+    if (data.expirationDate) {
+      setExpiresAt(data.expirationDate);
+      // Mettre à jour le date picker
+      try {
+        const date = parseFrenchDate(data.expirationDate);
+        setSelectedDate(date);
+        setErrors(prev => ({ ...prev, expiresAt: '' }));
+      } catch (error) {
+        console.warn('Date invalide extraite:', data.expirationDate);
+      }
+    }
+
+    // Si le cinéma est détecté, essayer de le mapper
+    if (data.cinemaName) {
+      // Pour l'instant, on affiche juste une notification
+      Alert.alert(
+        'Cinéma détecté',
+        `Le cinéma "${data.cinemaName}" a été détecté. Sélectionnez-le manuellement dans la liste.`,
+        [{ text: 'OK' }]
+      );
+    }
+
+    Alert.alert(
+      'Analyse terminée',
+      `Données extraites avec ${Math.round(data.confidence * 100)}% de confiance. Vérifiez et ajustez si nécessaire.`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handlePickFile = async () => {
@@ -181,59 +221,16 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
           </View>
 
           {/* Cinema Selection */}
-          <View style={styles.inputSection}>
-            <Menu
-              visible={menuVisible}
-              onDismiss={() => setMenuVisible(false)}
-              anchor={
-                <Button
-                  mode="outlined"
-                  onPress={() => setMenuVisible(!menuVisible)}
-                  icon="movie"
-                  contentStyle={[styles.cinemaButtonContent, { justifyContent: 'flex-start' }]}
-                  style={[styles.cinemaButton, errors.cinemaId && styles.cinemaButtonError]}
-                  labelStyle={[styles.cinemaButtonLabel, !cinemaName && styles.placeholderText]}
-                >
-                  {cinemaName || "Sélectionnez un cinéma"}
-                </Button>
-              }
-            >
-              {cinemas.length === 0 ? (
-                <Menu.Item
-                  onPress={() => {}}
-                  title="Aucun cinéma disponible"
-                  disabled
-                  leadingIcon="alert-circle"
-                />
-              ) : (
-                cinemas.map((cinema) => (
-                  <Menu.Item
-                    key={cinema.id}
-                    onPress={() => {
-                      setCinemaId(cinema.id);
-                      setCinemaName(cinema.name);
-                      setMenuVisible(false);
-                      if (errors.cinemaId) setErrors(prev => ({ ...prev, cinemaId: '' }));
-                    }}
-                    title={cinema.name}
-                    leadingIcon="movie"
-                    titleStyle={{ fontWeight: cinemaId === cinema.id ? 'bold' : 'normal' }}
-                  />
-                ))
-              )}
-              <Divider style={styles.menuDivider} />
-              <Menu.Item
-                onPress={() => {
-                  setMenuVisible(false);
-                  navigation.navigate('AddCinema');
-                }}
-                title="Ajouter un nouveau cinéma"
-                leadingIcon="plus"
-                titleStyle={styles.addCinemaText}
-              />
-            </Menu>
-            <HelperText type="error" visible={!!errors.cinemaId}>{errors.cinemaId}</HelperText>
-          </View>
+          <CinemaSelector
+            value={cinemaId}
+            onSelect={(id, name) => {
+              setCinemaId(id);
+              setCinemaName(name);
+              if (errors.cinemaId) setErrors(prev => ({ ...prev, cinemaId: '' }));
+            }}
+            error={errors.cinemaId}
+            onAddNew={() => navigation.navigate('AddCinema')}
+          />
 
           {/* Expiration Date Input */}
           <View style={styles.inputSection}>
@@ -293,6 +290,17 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
         >
           Scanner un QR code
         </Button>
+
+        <Button
+          mode="outlined"
+          onPress={() => setShowAnalyzerModal(true)}
+          disabled={loading}
+          icon="brain"
+          style={[styles.scanButton, styles.aiButton]}
+          labelStyle={styles.aiButtonText}
+        >
+          Analyser avec IA
+        </Button>
       </View>
 
       {/* Native Date Picker */}
@@ -305,6 +313,14 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
           minimumDate={new Date()}
         />
       )}
+
+      {/* Modal d'analyse IA */}
+      <TicketAnalyzerModal
+        visible={showAnalyzerModal}
+        onDismiss={() => setShowAnalyzerModal(false)}
+        onDataExtracted={handleExtractedData}
+        debug={__DEV__}
+      />
     </ScrollView>
   );
 }
@@ -349,13 +365,6 @@ const styles = StyleSheet.create({
   textInput: {
     backgroundColor: '#fafafa',
   },
-  menuDivider: {
-    marginVertical: 8,
-  },
-  addCinemaText: {
-    color: '#1976d2',
-    fontWeight: '500',
-  },
   fileButton: {
     paddingVertical: 8,
   },
@@ -381,21 +390,11 @@ const styles = StyleSheet.create({
   scanButton: {
     paddingVertical: 4,
   },
-  cinemaButton: {
-    backgroundColor: '#fafafa',
-    paddingVertical: 12,
-    justifyContent: 'flex-start',
+  aiButton: {
+    borderColor: '#9c27b0',
   },
-  cinemaButtonError: {
-    borderColor: '#f44336',
-  },
-  cinemaButtonContent: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  cinemaButtonLabel: {
-    fontSize: 16,
-    textAlign: 'left',
+  aiButtonText: {
+    color: '#9c27b0',
   },
   placeholderText: {
     color: '#666',

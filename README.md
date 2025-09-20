@@ -4,7 +4,7 @@ Gestion simple des billets de cinéma achetés via le CSE (import de PDF, scan Q
 
 ---
 
-## ✨ Fonctionnalités (MVP)
+## Fonctionnalités (MVP)
 
 * Importer un **PDF** de billet (stockage local en sandbox Expo)
 * **Scanner** le QR code (expo-camera)
@@ -15,7 +15,7 @@ Gestion simple des billets de cinéma achetés via le CSE (import de PDF, scan Q
 
 ---
 
-## 🧰 Stack technique
+## Stack technique
 
 * **React Native** via **Expo** (TypeScript)
 * **React Navigation** (stack)
@@ -27,7 +27,7 @@ Gestion simple des billets de cinéma achetés via le CSE (import de PDF, scan Q
 
 ---
 
-## ✅ Prérequis
+## Prérequis
 
 * Node.js **≥ 18**
 * Windows/macOS/Linux
@@ -37,7 +37,7 @@ Gestion simple des billets de cinéma achetés via le CSE (import de PDF, scan Q
 
 ---
 
-## 🚀 Démarrage rapide
+## Démarrage rapide
 
 ### 1) Cloner / Créer le dossier
 
@@ -87,7 +87,7 @@ Les migrations SQLite s'appliquent automatiquement au premier démarrage.
 
 ---
 
-## 📁 Arborescence
+## Arborescence
 
 ```
 CineWallet/
@@ -126,7 +126,7 @@ CineWallet/
 
 ---
 
-## 🗄️ Modèle de données
+## Modèle de données
 
 ### `tickets`
 
@@ -155,7 +155,7 @@ Indices utiles : `tickets(code)`, `tickets(status)`, `tickets(expiresAt)`
 
 ---
 
-## 🔧 Scripts npm
+## Scripts npm
 
 ```json
 {
@@ -188,7 +188,7 @@ npx expo prebuild --clean
 
 ---
 
-## 🖼️ Gestion des Assets
+## Gestion des Assets
 
 ### Configuration des ressources
 
@@ -200,7 +200,7 @@ L'application utilise des assets optimisés pour assurer un bon affichage sur to
 - `splash-icon.png`: 1024x1024px, <200KB (écran de démarrage)
 - `favicon.png`: 64x64px, <10KB (favicon web)
 
-### ⚠️ Important : Régénération des ressources natives
+### Important : Régénération des ressources natives
 
 **Après toute modification d'assets dans `/assets`**, vous DEVEZ exécuter :
 
@@ -220,7 +220,7 @@ npx expo prebuild --clean
 
 ---
 
-## ⚙️ Config Drizzle
+## Config Drizzle
 
 `drizzle.config.ts` :
 
@@ -245,7 +245,7 @@ export const db = drizzle(sqlite);
 
 ---
 
-## 🧪 Flux de test
+## Flux de test
 
 1. **Home → Ajouter**
 2. Saisir `code`, `qrPayload`, `cinemaId`, `expiresAt` (YYYY-MM-DD)
@@ -260,6 +260,7 @@ export const db = drizzle(sqlite);
 * **Validation de format** : Date française (JJ/MM/AAAA), code minimum 3 caractères
 * **Gestion d'erreurs** : Messages d'erreur clairs, gestion des doublons
 * **UX améliorée** : États de loading, scanner QR avec interface guidée, sélecteur de date modal intuitif
+* **Analyse OCR** : Extraction automatique depuis photos avec validation intelligente
 
 ### Interface utilisateur
 
@@ -270,27 +271,120 @@ export const db = drizzle(sqlite);
 
 ---
 
-## 🆕 Récentes améliorations (v1.3)
+## Récentes améliorations (v1.4)
 
-### ✅ Problèmes résolus
+### Problèmes résolus (v1.3)
 * **Assets/Icônes** : Résolution des problèmes d'affichage d'icônes sur smartphone
 * **Date picker natif** : Remplacement du modal personnalisé par `@react-native-community/datetimepicker`
 * **Persistance de formulaire** : Correction des champs qui se vidaient lors d'actions (scan QR, import fichier)
 * **Optimisation assets** : Compression automatique et guidelines de taille
 * **Système de fichiers** : Migration vers `expo-file-system/legacy` pour éviter les warnings
 
-### 🎯 Nouvelles fonctionnalités
-* **🔍 Filtres de billets** : Système de filtrage avec SegmentedButtons (Tous, Valides, Utilisés, Expirés)
-* **📊 Compteurs dynamiques** : Affichage en temps réel du nombre de billets par catégorie
-* **⚠️ Détection d'expiration** : Identification automatique des billets expirés avec highlighting
-* **📱 Interface intuitive** : Filtres visuels avec icônes Material Design et état vide personnalisé
-* **Date picker natif** : Interface système native Android/iOS pour sélection de date
-* **Gestion d'assets optimisée** : Regeneration automatique des ressources avec `npx expo prebuild --clean`
-* **Documentation complète** : Guide détaillé pour la gestion des assets et ressources natives
+### Nouvelles fonctionnalités (v1.4)
+* **Filtres de billets** : Système de filtrage avec SegmentedButtons (Tous, Valides, Utilisés, Expirés)
+* **Compteurs dynamiques** : Affichage en temps réel du nombre de billets par catégorie
+* **Détection d'expiration** : Identification automatique des billets expirés avec highlighting
+* **🎬 Sélecteur de cinéma avancé** : Interface visuelle avec avatars colorés et support logos (prêt pour v1.5)
+* **Gestion complète des cinémas** : Écran d'ajout avec couleurs, validation, et 8 cinémas pré-configurés
+* **Notifications intelligentes** : Système automatique d'alertes avant expiration (3j/1j/2h)
+* **Interface cohérente** : Composants réutilisables et design system unifié
+* **Architecture modulaire** : Hooks personnalisés et stores optimisés pour les notifications
+
+### **Version actuelle (v1.6)**
+* **Analyse OCR traditionnelle de tickets** : Extraction automatique des données de tickets
+  - OCR simulé avec patterns regex spécialisés
+  - Parsing intelligent basé sur des règles prédéfinies
+  - Support JPEG, PNG et PDF (en développement)
+  - Interface d'analyse guidée avec feedback en temps réel
+  - Validation et correction des données extraites
+  - Remplissage automatique des formulaires
+  - Système de confiance et détection d'erreurs
+
+### **Version précédente (v1.5)**
+* **Upload de logos de cinémas** : Remplacement des avatars par de vrais logos d'images
+  - Support des formats PNG, JPG, WebP
+  - Validation automatique (taille max 2MB)
+  - Stockage local optimisé avec nettoyage automatique
+  - Interface de sélection d'image native avec prévisualisation
+  - 8 cinémas pré-configurés avec logos officiels Wikipédia
+
+### Cinémas pré-configurés
+* **UGC Ciné Cité** (Rouge) - Chaîne nationale
+* **Pathé** (Noir) - Réseau historique français
+* **Gaumont** (Orange) - Plus ancien studio encore actif
+* **CGR Cinemas** (Bleu) - Groupe indépendant français
+* **Kinepolis** (Violet) - Chaîne belge en France
+* **MK2** (Orange) - Cinémas d'auteur parisiens
+* **Mégarama** (Vert) - Multiplexes modernes
+* **Cinémas Indépendants Parisiens** (Violet) - Réseau parisien
 
 ---
 
-## 🔧 Nouvelles migrations
+## Analyse OCR de tickets
+
+### Architecture du système d'analyse
+
+L'application intègre un système d'analyse OCR traditionnel pour extraire automatiquement les données des tickets de cinéma depuis des images en utilisant des patterns regex spécialisés.
+
+**Composants principaux :**
+- `src/utils/ticketAnalyzer.ts` - Moteur d'analyse principal
+- `src/components/TicketAnalyzerModal.tsx` - Interface utilisateur d'analyse
+- Intégration dans `AddTicketScreen` avec bouton "Analyser avec OCR"
+
+### Fonctionnalités d'extraction
+
+**Données extraites automatiquement :**
+- **Code de billet** : Codes alphanumériques (ex: 5CE15A, P8K9L2)
+- **Date d'expiration** : Formats français et internationaux
+- **Nom du cinéma** : Reconnaissance des chaînes principales (UGC, Pathé, Gaumont, etc.)
+- **Contenu QR** : URLs et codes texte
+- **Prix** : Montants en euros
+- **Heure de séance** : Horaires au format français
+- **Informations de place** : Salle et siège si disponibles
+
+**Formats supportés :**
+- Images : JPEG, PNG (max 10MB)
+- PDF : Support basique (en développement)
+
+### Système de validation
+
+**Score de confiance :**
+- Calcul automatique basé sur la quantité et qualité des données extraites
+- Seuil minimum de 30% pour validation
+- Feedback visuel avec code couleur (vert >70%, orange >40%, rouge <40%)
+
+**Validation des données :**
+- Vérification des formats (dates, codes, prix)
+- Détection des erreurs et suggestions de correction
+- Possibilité d'ajustement manuel avant enregistrement
+
+### Interface utilisateur
+
+**Modal d'analyse guidée :**
+1. Sélection d'image depuis la galerie
+2. Analyse en temps réel avec barre de progression
+3. Prévisualisation des résultats avec score de confiance
+4. Validation et correction des données extraites
+5. Remplissage automatique du formulaire principal
+
+**Fonctionnalités avancées :**
+- Mode debug pour développeurs (texte brut OCR)
+- Gestion des erreurs avec messages explicatifs
+- Optimisation pour différents types de tickets
+
+### Évolutions prévues vers l'IA générative
+
+**Prochaine étape majeure - OCR avec IA mobile :**
+- Remplacement du système actuel par des modèles multimodaux (BakLLaVA, LLaVA)
+- Inférence locale sur appareil mobile avec MLC LLM ou similaire
+- Compréhension contextuelle avancée des tickets
+- Apprentissage adaptatif selon les retours utilisateur
+- Support natif des formats complexes (PDF scannés, images floues)
+- Reconnaissance intelligente des nouveaux formats de cinémas
+
+---
+
+## Nouvelles migrations
 
 Pour ajouter de nouvelles migrations :
 
@@ -311,7 +405,7 @@ export default {
 
 ---
 
-## 🧭 Alias & TS
+## Alias & TS
 
 `tsconfig.json` (extrait) :
 
@@ -330,7 +424,7 @@ export default {
 
 ---
 
-## 🩹 Dépannage
+## Dépannage
 
 * **Expo réclame `react-native-web` / `react-dom`**
 
@@ -388,14 +482,24 @@ export default {
 
 ## 🗺️ Roadmap
 
-* ✅ **Filtres : Non utilisés / Utilisés / Expirés** - Implémenté avec SegmentedButtons
-* Sélecteur de cinéma (logo, couleurs)
-* Notifications locales avant expiration
+### **Fonctionnalités terminées**
+* **Filtres : Non utilisés / Utilisés / Expirés** - Implémenté avec SegmentedButtons
+* **Sélecteur de cinéma avec logos** - Interface visuelle avec vrais logos
+* **Gestion des cinémas** - Écran d'ajout avec couleurs et validation
+* **Upload de logos de cinémas** - Sélection depuis galerie, formats PNG/JPG/WebP
+* **Cinémas par défaut** - 8 cinémas français avec logos officiels
+* **Notifications locales avant expiration** - Système complet (3j/1j/2h avant)
+* **Analyse OCR traditionnelle de tickets** - Extraction automatique avec patterns regex
+
+### **En cours ou à venir**
+* **OCR avec IA générative mobile** - Remplacement par des modèles multimodaux (BakLLaVA, LLaVA)
 * Import/Export JSON (sauvegarde/restauration)
-* Parsing automatique du **CODEWEB** depuis le texte des PDF
 * Écran de détail des billets
 * Amélioration du sélecteur de date (calendrier visuel)
 * Mode sombre / thème personnalisable
+* Édition des cinémas existants
+* Statistiques d'utilisation des billets
+* Synchronisation cloud (optionnelle)
 
 ---
 

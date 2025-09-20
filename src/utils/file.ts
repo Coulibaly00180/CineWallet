@@ -34,10 +34,10 @@ export async function pickAndStoreFile(): Promise<string | null> {
       to: dest
     });
 
-    console.log(`📁 Fichier sauvegardé: ${asset.name} (${asset.size} bytes)`);
+    console.log(`Fichier sauvegardé: ${asset.name} (${asset.size} bytes)`);
     return dest;
   } catch (error) {
-    console.error('❌ Erreur lors de l\'import de fichier:', error);
+    console.error('Erreur lors de l\'import de fichier:', error);
     throw error;
   }
 }

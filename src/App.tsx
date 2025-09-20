@@ -6,6 +6,9 @@ import RootNavigation from '@/navigation';
 
 import { db } from '@/db/client';
 import { cinemas, tickets } from '@/db/schema';
+import { initializeDefaultCinemas } from '@/utils/initializeDatabase';
+import { notificationManager } from '@/utils/notifications';
+import { imageManager } from '@/utils/imageUtils';
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
@@ -14,7 +17,7 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        console.log('🔄 Creating tables...');
+        console.log('Creating tables...');
 
         // Créer les tables directement au lieu d'utiliser les migrations
         await db.run(`CREATE TABLE IF NOT EXISTS cinemas (
@@ -54,10 +57,20 @@ export default function App() {
         await db.run(`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)`);
         await db.run(`CREATE INDEX IF NOT EXISTS idx_tickets_expires ON tickets(expires_at)`);
 
-        console.log('✅ Tables created successfully');
+        console.log('Tables created successfully');
+
+        // Initialiser les cinémas par défaut
+        await initializeDefaultCinemas();
+
+        // Initialiser le système de notifications
+        await notificationManager.initialize();
+
+        // Initialiser le dossier de stockage des logos
+        await imageManager.initializeStorage();
+
         setIsReady(true);
       } catch (e) {
-        console.error('❌ Database setup error:', e);
+        console.error('Database setup error:', e);
         setError(e instanceof Error ? e.message : String(e));
       }
     })();
