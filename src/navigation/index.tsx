@@ -5,6 +5,7 @@ import AddTicketScreen from '@/screens/AddTicketScreen';
 import ScanScreen from '@/screens/ScanScreen';
 import CinemasScreen from '@/screens/CinemasScreen';
 import AddCinemaScreen from '@/screens/AddCinemaScreen';
+import EditCinemaScreen from '@/screens/EditCinemaScreen';
 import BackupScreen from '@/screens/BackupScreen';
 import { RootStackParamList } from '@/types/navigation';
 
@@ -19,6 +20,7 @@ export default function RootNavigation() {
         <Stack.Screen name="Scan" component={ScanScreen} options={{ title: 'Scanner QR' }}/>
         <Stack.Screen name="Cinemas" component={CinemasScreen} options={{ title: 'Cinémas' }}/>
         <Stack.Screen name="AddCinema" component={AddCinemaScreen} options={{ title: 'Ajouter un cinéma' }}/>
+        <Stack.Screen name="EditCinema" component={EditCinemaScreen} options={{ title: 'Modifier le cinéma' }}/>
         <Stack.Screen name="Backup" component={BackupScreen} options={{ title: 'Sauvegarde & Restauration' }}/>
       </Stack.Navigator>
     </NavigationContainer>

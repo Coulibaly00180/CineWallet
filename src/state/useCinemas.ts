@@ -12,6 +12,7 @@ type Store = {
   items: Cinema[];
   refresh: () => Promise<void>;
   add: (cinema: NewCinema) => Promise<void>;
+  update: (id: string, cinema: NewCinema) => Promise<void>;
   remove: (id: string) => Promise<void>;
 };
 
@@ -49,6 +50,28 @@ export const useCinemas = create<Store>((set, get) => ({
       await get().refresh();
     } catch (error) {
       console.error('Error adding cinema:', error);
+      throw error;
+    }
+  },
+  update: async (id, cinema) => {
+    try {
+      await db.update(cinemas).set({
+        name: cinema.name,
+        slug: cinema.slug,
+        website: cinema.website,
+        logoUri: cinema.logoUri,
+        primaryColor: cinema.primaryColor,
+        secondaryColor: cinema.secondaryColor,
+        qrFormat: cinema.qrFormat,
+        city: cinema.city,
+        country: cinema.country,
+        phone: cinema.phone,
+        notes: cinema.notes,
+        updatedAt: new Date(),
+      }).where(eq(cinemas.id, id));
+      await get().refresh();
+    } catch (error) {
+      console.error('Error updating cinema:', error);
       throw error;
     }
   },

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { View, Alert, ScrollView, StyleSheet, Platform } from 'react-native';
 import { TextInput, Button, HelperText, Text, Card, IconButton } from 'react-native-paper';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useTickets } from '@/state/useTickets';
 import { pickAndStoreFile, getFileType } from '@/utils/file';
 import { TicketInput } from '@/utils/validators';
 import { AddTicketScreenProps } from '@/types/navigation';
 import CinemaSelector from '@/components/CinemaSelector';
 import TicketAnalyzerModal from '@/components/TicketAnalyzerModal';
+import DatePickerModal from '@/components/DatePickerModal';
 import { ExtractedTicketData } from '@/utils/ticketAnalyzer';
 
 export default function AddTicketScreen({ navigation, route }: AddTicketScreenProps) {
@@ -18,7 +18,7 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
 
   // États pour le date picker
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [cinemaId, setCinemaId] = useState('');
   const [cinemaName, setCinemaName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,23 +38,11 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
   };
 
   // Handler pour le changement de date
-  const handleDateChange = (event: any, date?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-
-    if (date && event.type !== 'dismissed') {
-      setSelectedDate(date);
-      const formattedDate = formatDateFrench(date);
-      setExpiresAt(formattedDate);
-      if (errors.expiresAt) setErrors(prev => ({ ...prev, expiresAt: '' }));
-
-      if (Platform.OS === 'ios') {
-        setShowDatePicker(false);
-      }
-    } else if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+    const formattedDate = formatDateFrench(date);
+    setExpiresAt(formattedDate);
+    if (errors.expiresAt) setErrors(prev => ({ ...prev, expiresAt: '' }));
   };
 
 
@@ -245,6 +233,9 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
               {expiresAt || "Sélectionnez une date"}
             </Button>
             <HelperText type="error" visible={!!errors.expiresAt}>{errors.expiresAt}</HelperText>
+            <HelperText type="info" visible={!errors.expiresAt}>
+              Calendrier visuel avec sélections rapides
+            </HelperText>
           </View>
 
           {/* File Import Section */}
@@ -303,16 +294,15 @@ export default function AddTicketScreen({ navigation, route }: AddTicketScreenPr
         </Button>
       </View>
 
-      {/* Native Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
-          minimumDate={new Date()}
-        />
-      )}
+      {/* Modal Date Picker */}
+      <DatePickerModal
+        visible={showDatePicker}
+        selectedDate={selectedDate}
+        onDateSelect={handleDateChange}
+        onDismiss={() => setShowDatePicker(false)}
+        minimumDate={new Date()}
+        title="Date d'expiration du billet"
+      />
 
       {/* Modal d'analyse IA */}
       <TicketAnalyzerModal

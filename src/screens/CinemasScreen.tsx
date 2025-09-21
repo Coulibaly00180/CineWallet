@@ -66,11 +66,18 @@ export default function CinemasScreen({ navigation }: CinemasScreenProps) {
                 subtitle={`${item.city || 'Ville inconnue'} • ${item.slug}`}
                 left={() => <IconButton icon="movie" iconColor="#1976d2" />}
                 right={() => (
-                  <IconButton
-                    icon="delete"
-                    iconColor="#f44336"
-                    onPress={() => handleDelete(item.id)}
-                  />
+                  <View style={{ flexDirection: 'row' }}>
+                    <IconButton
+                      icon="pencil"
+                      iconColor="#1976d2"
+                      onPress={() => navigation.navigate('EditCinema', { cinemaId: item.id })}
+                    />
+                    <IconButton
+                      icon="delete"
+                      iconColor="#f44336"
+                      onPress={() => handleDelete(item.id)}
+                    />
+                  </View>
                 )}
               />
               <Card.Content style={styles.cardContent}>

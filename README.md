@@ -184,6 +184,19 @@ cd android && ./gradlew assembleDebug
 npx expo prebuild --clean
 ```
 
+**Génération d'APK :**
+```bash
+# Préparer l'environnement et générer l'APK
+npx expo prebuild --clean
+npx expo run:android
+
+# L'APK sera généré à :
+# android/app/build/outputs/apk/debug/app-debug.apk
+
+# Installation manuelle sur appareil
+adb install android/app/build/outputs/apk/debug/app-debug.apk
+```
+
 > **Ne pas utiliser** `drizzle:push` avec Expo/SQLite (c'est pour DB distante et demande une URL).
 
 ---
@@ -290,15 +303,17 @@ export const db = drizzle(sqlite);
 * **Interface cohérente** : Composants réutilisables et design system unifié
 * **Architecture modulaire** : Hooks personnalisés et stores optimisés pour les notifications
 
-### **Version actuelle (v1.6)**
-* **Analyse OCR traditionnelle de tickets** : Extraction automatique des données de tickets
-  - OCR simulé avec patterns regex spécialisés
-  - Parsing intelligent basé sur des règles prédéfinies
-  - Support JPEG, PNG et PDF (en développement)
-  - Interface d'analyse guidée avec feedback en temps réel
-  - Validation et correction des données extraites
-  - Remplissage automatique des formulaires
-  - Système de confiance et détection d'erreurs
+### **Version actuelle (v1.7)**
+* **Application complète et production-ready** : Toutes les fonctionnalités de base implémentées
+  - **Génération d'APK Android** : Compilation native fonctionnelle
+  - **Backup/Restore complet** : Import/export JSON avec gestion des conflits
+  - **Édition des cinémas** : Modification de tous les paramètres existants
+  - **Calendrier visuel** : Sélecteur de date amélioré avec navigation intuitive
+  - **Vue détaillée des billets** : Écran complet avec actions et métadonnées
+  - **Analyse OCR traditionnelle** : Extraction automatique depuis images/PDF
+  - **Gestion complète des fichiers** : Support multi-format avec validation
+  - **Interface Material Design** : UI cohérente et responsive
+  - **Base de données robuste** : SQLite avec migrations automatiques
 
 ### **Version précédente (v1.5)**
 * **Upload de logos de cinémas** : Remplacement des avatars par de vrais logos d'images
@@ -456,12 +471,19 @@ export default {
   * Compilations suivantes : 1-3 minutes
   * Utilise `--no-build-cache` si problème de cache
 
-* **Erreurs de dépendances natives (expo-barcode-scanner, DateTimePicker)**
+* **Erreurs de dépendances natives ou builds**
 
-  * Ces dépendances ont été remplacées par des solutions plus stables :
+  * **Première solution** : Réparer les dépendances Expo
+    ```bash
+    npx expo install --fix
+    npx expo prebuild --clean
+    ```
+
+  * **Ces dépendances ont été remplacées par des solutions plus stables :**
     - `expo-barcode-scanner` → `expo-camera` (meilleure compatibilité native)
     - `@react-native-community/datetimepicker` → Modal personnalisé React Native Paper
-  * Si tu vois des erreurs de résolution, fais `npm install` puis `npx expo run:android`
+
+  * **Si erreurs de résolution :** `npm install` puis `npx expo run:android`
 
 * **Avertissements de dépréciation expo-file-system**
 
@@ -491,13 +513,31 @@ export default {
 * **Notifications locales avant expiration** - Système complet (3j/1j/2h avant)
 * **Analyse OCR traditionnelle de tickets** - Extraction automatique avec patterns regex
 
+### **Nouvelles fonctionnalités terminées (v1.7)**
+* **Import/Export JSON** - Système complet de sauvegarde/restauration des données
+  - Export sélectif (billets, cinémas ou tout)
+  - Import avec gestion des conflits et validation
+  - Interface utilisateur avec statistiques détaillées
+  - Compatibilité versions et vérification d'intégrité
+* **Édition des cinémas** - Modification complète des cinémas existants
+  - Formulaire pré-rempli avec toutes les données actuelles
+  - Gestion des logos avec possibilité de changement/suppression
+  - Validation des modifications et gestion d'erreurs
+* **Sélecteur de date amélioré** - Calendrier visuel interactif
+  - Navigation mois/année avec boutons intuitifs
+  - Sélections rapides (aujourd'hui, demain, semaine, mois)
+  - Contraintes de dates (minimum/maximum)
+  - Design Material cohérent avec l'application
+* **Écran de détail des billets** - Vue complète des informations
+  - Affichage du statut avec codage couleur (valide/utilisé/expiré)
+  - Informations complètes du cinéma associé
+  - Actions contextuelles (marquer utilisé, partager, supprimer)
+  - Métadonnées et historique des modifications
+  - Contenu QR sélectionnable pour copie
+
 ### **En cours ou à venir**
 * **OCR avec IA générative mobile** - Remplacement par des modèles multimodaux (BakLLaVA, LLaVA)
-* Import/Export JSON (sauvegarde/restauration)
-* Écran de détail des billets
-* Amélioration du sélecteur de date (calendrier visuel)
 * Mode sombre / thème personnalisable
-* Édition des cinémas existants
 * Statistiques d'utilisation des billets
 * Synchronisation cloud (optionnelle)
 
